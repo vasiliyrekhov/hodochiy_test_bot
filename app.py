@@ -1,6 +1,5 @@
 import asyncio
 import os
-import threading
 from flask import Flask
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
@@ -15,8 +14,6 @@ if not TOKEN:
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
-
-# ===== Хранилище результатов пользователя =====
 user_scores = {}
 
 # ===== Состояния для FSM =====
@@ -30,7 +27,7 @@ class TestState(StatesGroup):
     q7 = State()
     q8 = State()
 
-# ===== Вопросы =====
+# ===== Вопросы (ТЕ ЖЕ САМЫЕ, что были) =====
 questions = {
     "q1": {
         "text": "1️⃣ Что ты делаешь, когда сталкиваешься с неразрешимой проблемой?",
@@ -205,7 +202,7 @@ async def show_result(message: types.Message, state: FSMContext, user_id=None):
 async def unknown(message: types.Message):
     await message.answer("🧙‍♂️ Нажми /start, чтобы пройти тест!")
 
-# ===== Flask для Render =====
+# ===== ОСНОВНОЕ ИЗМЕНЕНИЕ: Flask и бот в одном потоке =====
 app = Flask(__name__)
 
 @app.route('/')
@@ -216,16 +213,14 @@ def home():
 def health():
     return "OK", 200
 
-async def run_bot():
-    print("Бот запущен!")
-    await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot)
-
-def start_bot():
-    asyncio.run(run_bot())
-
 if __name__ == "__main__":
-    bot_thread = threading.Thread(target=start_bot)
-    bot_thread.start()
+    # Запускаем бота в том же потоке, что и Flask
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
+    # Запускаем бота в фоне
+    bot_task = loop.create_task(run_bot())
+    
+    # Flask запускается в главном потоке
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
