@@ -28,7 +28,7 @@ class TestState(StatesGroup):
     q7 = State()
     q8 = State()
 
-# ===== Вопросы =====
+# ===== Вопросы (БЕЗ ИЗМЕНЕНИЙ) =====
 questions = {
     "q1": {
         "text": "1️⃣ Что ты делаешь, когда сталкиваешься с неразрешимой проблемой?",
@@ -220,15 +220,16 @@ def home():
 def health():
     return "OK", 200
 
-# ===== ОСНОВНОЙ ЗАПУСК =====
+# ===== ГЛАВНЫЙ ЗАПУСК (исправленный) =====
 if __name__ == "__main__":
-    # Запускаем бота в отдельном потоке
-    def start_bot_thread():
-        asyncio.run(run_bot())
-    
-    bot_thread = threading.Thread(target=start_bot_thread)
-    bot_thread.start()
-    
-    # Запускаем Flask в главном потоке
     port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.0', port=port)
+    
+    # Запускаем Flask в отдельном потоке
+    def run_flask():
+        app.run(host='0.0.0.0', port=port)
+    
+    flask_thread = threading.Thread(target=run_flask)
+    flask_thread.start()
+    
+    # Запускаем бота в ГЛАВНОМ потоке
+    asyncio.run(run_bot())
