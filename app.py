@@ -16,7 +16,7 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher()
 user_scores = {}
 
-# ===== Состояния для FSM =====
+# ===== Состояния для FSM =====,,
 class TestState(StatesGroup):
     q1 = State()
     q2 = State()
@@ -27,7 +27,7 @@ class TestState(StatesGroup):
     q7 = State()
     q8 = State()
 
-# ===== Вопросы (ТЕ ЖЕ САМЫЕ, что были) =====
+# ===== Вопросы =====
 questions = {
     "q1": {
         "text": "1️⃣ Что ты делаешь, когда сталкиваешься с неразрешимой проблемой?",
@@ -202,7 +202,13 @@ async def show_result(message: types.Message, state: FSMContext, user_id=None):
 async def unknown(message: types.Message):
     await message.answer("🧙‍♂️ Нажми /start, чтобы пройти тест!")
 
-# ===== ОСНОВНОЕ ИЗМЕНЕНИЕ: Flask и бот в одном потоке =====
+# ===== Функция запуска бота =====
+async def run_bot():
+    print("Бот запущен!")
+    await bot.delete_webhook(drop_pending_updates=True)
+    await dp.start_polling(bot)
+
+# ===== Flask для Render =====
 app = Flask(__name__)
 
 @app.route('/')
