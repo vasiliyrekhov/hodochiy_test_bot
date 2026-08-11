@@ -1,5 +1,6 @@
 import asyncio
 import os
+import threading
 from flask import Flask
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
@@ -16,7 +17,7 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher()
 user_scores = {}
 
-# ===== Состояния для FSM =====,,
+# ===== Состояния для FSM =====
 class TestState(StatesGroup):
     q1 = State()
     q2 = State()
@@ -219,14 +220,15 @@ def home():
 def health():
     return "OK", 200
 
+# ===== ОСНОВНОЙ ЗАПУСК =====
 if __name__ == "__main__":
-    # Запускаем бота в том же потоке, что и Flask
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    # Запускаем бота в отдельном потоке
+    def start_bot_thread():
+        asyncio.run(run_bot())
     
-    # Запускаем бота в фоне
-    bot_task = loop.create_task(run_bot())
+    bot_thread = threading.Thread(target=start_bot_thread)
+    bot_thread.start()
     
-    # Flask запускается в главном потоке
+    # Запускаем Flask в главном потоке
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
