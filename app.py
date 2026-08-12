@@ -124,13 +124,12 @@ def get_keyboard(question_key):
     ])
     return kb
 
-# ===== ОБРАБОТЧИК КОМАНДЫ /start (с поддержкой Deep Linking) =====
+# ===== ОБРАБОТЧИК КОМАНДЫ /start =====
 @dp.message(CommandStart())
 async def cmd_start(message: types.Message, command: CommandObject, state: FSMContext):
     await state.clear()
     user_scores[message.from_user.id] = []
     
-    # Если пользователь перешёл по ссылке с параметром (например, ?start=test)
     if command.args:
         await message.answer(
             "🧙‍♂️ *Привет! Ты перешёл по ссылке из канала.*\n\n"
@@ -139,15 +138,13 @@ async def cmd_start(message: types.Message, command: CommandObject, state: FSMCo
             parse_mode="Markdown"
         )
     else:
-        # Обычный запуск через /start без параметра
         await message.answer(
             "🧙‍♂️ *Добро пожаловать в тест «Какой ты персонаж из Ходячего замка»?*\n\n"
-            "Ответь на 8 вопросов, и я скажу, кто ты — Хаул, Софи, Ведьма Пустоши или Муха.\n\n"
+            "Ответь на 8 вопросов, и я скажу, кто ты — Хаул, Софи, Ведьма Пустоши или пёс Хин.\n\n"
             "Готов? Поехали! 🚀",
             parse_mode="Markdown"
         )
     
-    # Запускаем первый вопрос в любом случае
     await ask_question(message, state, 0)
 
 async def ask_question(message: types.Message, state: FSMContext, index: int):
@@ -204,11 +201,11 @@ async def show_result(message: types.Message, state: FSMContext, user_id=None):
     elif count_C >= count_A and count_C >= count_B and count_C >= count_D:
         character = "🧹 **Ведьма Пустоши**\n\nОго! Ты импульсивна, страстна и живёшь эмоциями. Ты не боишься быть сильной и требовать своё. Но, как и Ведьма, ты часто скрываешь за гневом огромную боль и одиночество. Тебе не хватает кого-то, кто полюбит тебя просто так."
     else:
-        character = "🐕 **Муха (собака-компаньон)**\n\nТы ценишь уют, тишину и простые радости. Ты наблюдателен, верен и не лезешь в драму, если она не касается тебя напрямую. Ты — «душа дома», тот, кто создаёт атмосферу покоя и всегда готов обнять (или вздремнуть)."
-    
-    stats = f"📊 *Твой профиль:* A={count_A}, B={count_B}, C={count_C}, D={count_D}"
+        character = "🐕 **Пёс Хин**\n\nТы ценишь уют, тишину и простые радости. Ты наблюдателен, верен и не лезешь в драму, если она не касается тебя напрямую. Ты — «душа дома», тот, кто создаёт атмосферу покоя и всегда готов обнять (или вздремнуть)."
+
+    # Отправляем результат БЕЗ строчки со статистикой
     await message.answer(
-        f"✨ *Ты — {character}*\n\n{stats}",
+        f"✨ *Ты — {character}*",
         parse_mode="Markdown"
     )
     await state.clear()
@@ -238,12 +235,10 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     
-    # Запускаем Flask в отдельном потоке
     def run_flask():
         app.run(host='0.0.0.0', port=port)
     
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
     
-    # Запускаем бота в ГЛАВНОМ потоке
     asyncio.run(run_bot())
