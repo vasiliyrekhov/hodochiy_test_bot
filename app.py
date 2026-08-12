@@ -3,7 +3,7 @@ import os
 import threading
 from flask import Flask
 from aiogram import Bot, Dispatcher, types
-from aiogram.filters import Command
+from aiogram.filters import CommandStart, CommandObject
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -28,7 +28,7 @@ class TestState(StatesGroup):
     q7 = State()
     q8 = State()
 
-# ===== Вопросы (КОРОТКИЕ варианты для кнопок) =====
+# ===== Вопросы =====
 questions = {
     "q1": {
         "text": "1️⃣ Что ты делаешь, когда сталкиваешься с неразрешимой проблемой?",
@@ -124,16 +124,30 @@ def get_keyboard(question_key):
     ])
     return kb
 
-@dp.message(Command("start"))
-async def cmd_start(message: types.Message, state: FSMContext):
+# ===== ОБРАБОТЧИК КОМАНДЫ /start (с поддержкой Deep Linking) =====
+@dp.message(CommandStart())
+async def cmd_start(message: types.Message, command: CommandObject, state: FSMContext):
     await state.clear()
     user_scores[message.from_user.id] = []
-    await message.answer(
-        "🧙‍♂️ *Добро пожаловать в тест «Какой ты персонаж из Ходячего замка?»*\n\n"
-        "Ответь на 8 вопросов, и я скажу, кто ты — Хаул, Софи, Ведьма Пустоши или Муха.\n\n"
-        "Готов? Поехали! 🚀",
-        parse_mode="Markdown"
-    )
+    
+    # Если пользователь перешёл по ссылке с параметром (например, ?start=test)
+    if command.args:
+        await message.answer(
+            "🧙‍♂️ *Привет! Ты перешёл по ссылке из канала.*\n\n"
+            "Давай сразу пройдём тест «Какой ты персонаж из Ходячего замка»?\n\n"
+            "Готов? Поехали! 🚀",
+            parse_mode="Markdown"
+        )
+    else:
+        # Обычный запуск через /start без параметра
+        await message.answer(
+            "🧙‍♂️ *Добро пожаловать в тест «Какой ты персонаж из Ходячего замка»?*\n\n"
+            "Ответь на 8 вопросов, и я скажу, кто ты — Хаул, Софи, Ведьма Пустоши или Муха.\n\n"
+            "Готов? Поехали! 🚀",
+            parse_mode="Markdown"
+        )
+    
+    # Запускаем первый вопрос в любом случае
     await ask_question(message, state, 0)
 
 async def ask_question(message: types.Message, state: FSMContext, index: int):
